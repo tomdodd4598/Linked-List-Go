@@ -20,27 +20,27 @@ func isNumberString(str string) bool {
 	return NumberRegex.MatchString(str)
 }
 
-func insertBefore(val string, oth *Item) bool {
-	if isNumberString(val) && isNumberString(oth.value) {
-		valInt, _ := new(big.Int).SetString(val, 10)
-		othInt, _ := new(big.Int).SetString(oth.value, 10)
+func insertBefore(val *string, item *Item[string]) bool {
+	if isNumberString(*val) && isNumberString(item.value) {
+		valInt, _ := new(big.Int).SetString(*val, 10)
+		othInt, _ := new(big.Int).SetString(item.value, 10)
 		return valInt.Cmp(othInt) < 1
 	} else {
-		return val < oth.value
+		return *val < item.value
 	}
 }
 
-func valueEquals(item *Item, val string) bool {
-	return item.value == val
+func valueEquals(item *Item[string], val *string) bool {
+	return item.value == *val
 }
 
 func main() {
 	reader := bufio.NewReader(os.Stdin)
 
-	var start *Item = nil
+	var start *Item[string] = nil
 
 	begin := true
-	input := ""
+	var input string
 
 	for true {
 		if !begin {
@@ -55,17 +55,17 @@ func main() {
 
 		if len(input) == 0 {
 			fmt.Println("\nProgram terminated!")
-			start = RemoveAll(start)
+			RemoveAll(&start)
 			return
 		} else if input[0] == '~' {
 			if len(input) == 1 {
 				fmt.Println("\nDeleting list...")
-				start = RemoveAll(start)
+				RemoveAll(&start)
 			} else {
 				input = input[1:]
 				if isValidString(input) {
 					fmt.Println("\nRemoving item...")
-					start = RemoveItem(start, input, valueEquals)
+					RemoveItem(&start, input, valueEquals)
 				} else {
 					fmt.Println("\nCould not parse input!")
 				}
@@ -89,7 +89,7 @@ func main() {
 			PrintFoldback(start)
 		} else if isValidString(input) {
 			fmt.Println("\nInserting item...")
-			start = InsertItem(start, input, insertBefore)
+			InsertItem(&start, input, insertBefore)
 		} else {
 			fmt.Println("\nCould not parse input!")
 		}

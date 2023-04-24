@@ -4,80 +4,60 @@ import (
 	"fmt"
 )
 
-func InsertItem(start *Item, val string, insertBefore func(string, *Item) bool) *Item {
-	fmt.Printf("Creating item: %s\n", val)
-	current := start
-	var previous *Item = nil
+func InsertItem[T any](start **Item[T], val T, insertBefore func(*T, *Item[T]) bool) {
+	fmt.Printf("Creating item: %v\n", val)
 
-	for current != nil && !insertBefore(val, current) {
-		previous = current
-		current = current.next
+	for *start != nil && !insertBefore(&val, *start) {
+		start = &(*start).next
 	}
-	item := &Item{val, current}
 
-	if previous == nil {
-		start = item
+	*start = &Item[T]{val, *start}
+}
+
+func RemoveItem[T any](start **Item[T], val T, valueEquals func(*Item[T], *T) bool) {
+	for *start != nil && !valueEquals(*start, &val) {
+		start = &(*start).next
+	}
+
+	if *start == nil {
+		fmt.Printf("Item %v does not exist!\n", val)
 	} else {
-		previous.next = item
+		*start = (*start).next
+		fmt.Printf("Removed item: %v\n", val)
 	}
-
-	return start
 }
 
-func RemoveItem(start *Item, val string, valueEquals func(*Item, string) bool) *Item {
-	current := start
-	var previous *Item = nil
-
-	for current != nil && !valueEquals(current, val) {
-		previous = current
-		current = current.next
-	}
-
-	if current == nil {
-		fmt.Printf("Item %s does not exist!\n", val)
-	} else {
-		if previous == nil {
-			start = current.next
-		} else {
-			previous.next = current.next
-		}
-		fmt.Printf("Removed item: %s\n", val)
-	}
-
-	return start
+func RemoveAll[T any](start **Item[T]) {
+	*start = nil
 }
 
-func RemoveAll(start *Item) *Item {
-	return nil
-}
-
-func PrintLoop(start *Item) {
+func PrintLoop[T any](start *Item[T]) {
 	for start != nil {
 		start = start.PrintGetNext()
 	}
 }
 
-func PrintIterator(start *Item) {
+func PrintIterator[T any](start *Item[T]) {
 	if start != nil {
-		for iter := (ItemIterator{start}); iter.HasNext(); {
+		for iter := (ItemIterator[T]{start}); iter.HasNext(); {
 			iter.Next().PrintGetNext()
 		}
 	}
 }
 
-func PrintRecursive(start *Item) {
+func PrintRecursive[T any](start *Item[T]) {
 	if start != nil {
 		PrintRecursive(start.PrintGetNext())
 	}
 }
 
-func PrintFold(start *Item) {
-	fSome := func(current *Item, _ *Item, accumulator string) string {
-		return fmt.Sprintf("%s%s, ", accumulator, current.value)
+func PrintFold[T any](start *Item[T]) {
+	fSome := func(current *Item[T], _ *Item[T], accumulator string) string {
+		return fmt.Sprintf("%s%v, ", accumulator, current.value)
 	}
 
-	fLast := func(current *Item, accumulator string) string {
-		return fmt.Sprintf("%s%s\n", accumulator, current.value)
+	fLast := func(current *Item[T], accumulator string) string {
+		return fmt.Sprintf("%s%v\n", accumulator, current.value)
 	}
 
 	fEmpty := func(accumulator string) string {
@@ -87,13 +67,13 @@ func PrintFold(start *Item) {
 	fmt.Print(ItemFold(fSome, fLast, fEmpty, "", start))
 }
 
-func PrintFoldback(start *Item) {
-	fSome := func(current *Item, _ *Item, innerVal string) string {
-		return fmt.Sprintf("%s, %s", current.value, innerVal)
+func PrintFoldback[T any](start *Item[T]) {
+	fSome := func(current *Item[T], _ *Item[T], innerVal string) string {
+		return fmt.Sprintf("%v, %s", current.value, innerVal)
 	}
 
-	fLast := func(current *Item) string {
-		return fmt.Sprintf("%s\n", current.value)
+	fLast := func(current *Item[T]) string {
+		return fmt.Sprintf("%v\n", current.value)
 	}
 
 	fEmpty := func() string {
